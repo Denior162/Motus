@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 class DeviceScanner @Inject constructor(
-    private val bluetoothAdapter: BluetoothAdapter?
+    bluetoothAdapter: BluetoothAdapter?
 ) : DeviceScannerInterface {
 
     private val bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner

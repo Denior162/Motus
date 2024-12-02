@@ -8,6 +8,7 @@ import com.denior.motus.bluetooth.ConnectionStatus
 import com.denior.motus.bluetooth.DeviceScanner
 import com.denior.motus.bluetooth.inerfaces.BluetoothConnectionInterface
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,7 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
+
 @HiltViewModel
 class MotusViewModel @Inject constructor(
     private val deviceScanner: DeviceScanner,
@@ -25,13 +28,10 @@ class MotusViewModel @Inject constructor(
     val deviceList: StateFlow<List<BluetoothDevice>> = deviceScanner.deviceList
         .map { it.toList() }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.DISCONNECTED)
     val connectionStatus: StateFlow<ConnectionStatus> get() = _connectionStatus
-
     private val _searchState = MutableStateFlow(SearchState.IDLE)
     val searchState: StateFlow<SearchState> get() = _searchState
-
     private val _heartRate = MutableStateFlow<Int?>(null)
     val heartRate: StateFlow<Int?> get() = _heartRate
 
@@ -52,36 +52,28 @@ class MotusViewModel @Inject constructor(
         _searchState.value = SearchState.IDLE
     }
 
-    fun updateConnectionStatus(status: ConnectionStatus) {
-        _connectionStatus.value = status
-    }
+    private var lastConnectAttempt: Long = 0
+    private val debounceInterval = 2000
 
     fun connectToDevice(deviceAddress: String) {
-        Log.d("MotusViewModel", "Connecting to device: $deviceAddress")
-        bluetoothConnectionManager.connect(deviceAddress)
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastConnectAttempt < debounceInterval) {
+            Log.d("MotusViewModel", "Connect attempt ignored due to debounce.")
+            return
+        }
+        lastConnectAttempt = currentTime
 
-        // Подписка на изменения статуса подключения
+        if (_connectionStatus.value != ConnectionStatus.DISCONNECTED) {
+            Log.d("MotusViewModel", "Cannot connect. Current state: ${_connectionStatus.value}")
+            return
+        }
+
+        Log.d("MotusViewModel", "Connecting to device: $deviceAddress")
         viewModelScope.launch {
-            bluetoothConnectionManager.connectionState.collect { status ->
-                when (status) {
-                    ConnectionStatus.CONNECTED -> _connectionStatus.value = ConnectionStatus.CONNECTED
-                    ConnectionStatus.DISCONNECTED -> _connectionStatus.value = ConnectionStatus.DISCONNECTED
-                    ConnectionStatus.FAILED -> _connectionStatus.value = ConnectionStatus.FAILED // Добавьте статус ошибки
-                    ConnectionStatus.CONNECTING -> TODO()
-                }
+            withContext(Dispatchers.IO) {
+                bluetoothConnectionManager.connect(deviceAddress)
             }
         }
-    }
-
-
-    fun disconnectDevice() {
-        Log.d("MotusViewModel", "Disconnecting from device")
-        bluetoothConnectionManager.disconnect()
-    }
-
-    fun updateHeartRate(value: Int) {
-        Log.d("MotusViewModel", "Updating heart rate to: $value")
-        _heartRate.value = value
     }
 
 }

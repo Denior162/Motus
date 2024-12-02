@@ -188,6 +188,6 @@ fun MotusTopBar(title: String? = null) {
 
 @Preview
 @Composable
-fun TopAppBar() {
-    MotusTopBar(title = null)
+fun MotusAppPreview() {
+    MotusApp()
 }
