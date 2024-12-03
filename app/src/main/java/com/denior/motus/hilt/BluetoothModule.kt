@@ -4,8 +4,11 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import com.denior.motus.bluetooth.BluetoothConnectionInterfaceImpl
-import com.denior.motus.bluetooth.ConnectionStatus
-import com.denior.motus.bluetooth.inerfaces.BluetoothConnectionInterface
+import com.denior.motus.bluetooth.manager.BluetoothConnectionManager
+import com.denior.motus.bluetooth.state.ConnectionState
+import com.denior.motus.bluetooth.manager.DeviceScanner
+import com.denior.motus.bluetooth.interfaces.BluetoothConnectionInterface
+import com.denior.motus.bluetooth.interfaces.DeviceScannerInterface
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,8 +34,28 @@ object BluetoothModule {
         @ApplicationContext context: Context,
         bluetoothAdapter: BluetoothAdapter
     ): BluetoothConnectionInterface {
-        return BluetoothConnectionInterfaceImpl(context, bluetoothAdapter, MutableStateFlow(ConnectionStatus.DISCONNECTED))
+        return BluetoothConnectionInterfaceImpl(
+            context, 
+            bluetoothAdapter, 
+            MutableStateFlow(ConnectionState.Disconnected)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideBluetoothConnectionManager(
+        @ApplicationContext context: Context,
+        bluetoothAdapter: BluetoothAdapter
+    ): BluetoothConnectionManager {
+        return BluetoothConnectionManager(context, bluetoothAdapter)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeviceScanner(
+        @ApplicationContext context: Context,
+        bluetoothAdapter: BluetoothAdapter
+    ): DeviceScannerInterface {
+        return DeviceScanner(context, bluetoothAdapter)
     }
 }
-
-

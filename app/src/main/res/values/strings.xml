@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Motus</string>
+    <string name="speed_label">Speed: %d RPM</string>
+    <string name="angle_label">Angle: %d°</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="motor_status">Motor Status</string>
+    <string name="retry">Retry</string>
 </resources>

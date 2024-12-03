@@ -1,4 +1,4 @@
-package com.denior.motus.bluetooth.inerfaces
+package com.denior.motus.bluetooth.interfaces
 
 import android.bluetooth.BluetoothDevice
 import kotlinx.coroutines.flow.StateFlow

@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.denior.motus"
-        minSdk = 26
+        minSdk = 33
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
 
     implementation(libs.hilt.android)
+    implementation(libs.androidx.bluetooth)
     kapt(libs.hilt.android.compiler)
 
     implementation (libs.androidx.hilt.navigation.compose)
