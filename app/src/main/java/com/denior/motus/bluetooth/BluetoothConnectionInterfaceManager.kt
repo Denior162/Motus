@@ -12,7 +12,8 @@ import javax.inject.Inject
 
 class BluetoothConnectionManager @Inject constructor(
     private val context: Context,
-    private val bluetoothAdapter: BluetoothAdapter
+    private val bluetoothAdapter: BluetoothAdapter,
+    override val receivedPower: StateFlow<Float>
 ) : BluetoothConnectionInterface {
 
     private val _connectionState = MutableStateFlow(ConnectionStatus.DISCONNECTED)
@@ -36,5 +37,9 @@ class BluetoothConnectionManager @Inject constructor(
         bluetoothGatt?.close()
         bluetoothGatt = null
         _connectionState.value = ConnectionStatus.DISCONNECTED
+    }
+
+    override fun sendPower(power: Float, value: ByteArray) {
+        TODO("Not yet implemented")
     }
 }

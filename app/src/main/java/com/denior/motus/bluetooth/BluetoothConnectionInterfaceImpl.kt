@@ -8,17 +8,22 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import com.denior.motus.bluetooth.inerfaces.BluetoothConnectionInterface
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
 
+
+
 class BluetoothConnectionInterfaceImpl(
     private val context: Context,
     private val bluetoothAdapter: BluetoothAdapter,
-    override val connectionState: StateFlow<ConnectionStatus>
+    override val connectionState: StateFlow<ConnectionStatus>,
+    override val receivedPower: StateFlow<Float>?
 ) : BluetoothConnectionInterface {
 
     private var bluetoothGatt: BluetoothGatt? = null
@@ -32,10 +37,12 @@ class BluetoothConnectionInterfaceImpl(
                     (connectionState as MutableStateFlow).value = ConnectionStatus.CONNECTED
                     gatt.discoverServices()
                 }
+
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.d("Bluetooth", "Disconnected from device: ${gatt.device.address}")
                     (connectionState as MutableStateFlow).value = ConnectionStatus.DISCONNECTED
                 }
+
                 else -> {
                     Log.e("Bluetooth", "Unknown connection state: $newState")
                 }
@@ -126,8 +133,59 @@ class BluetoothConnectionInterfaceImpl(
         bluetoothGatt = null
         (connectionState as MutableStateFlow).value = ConnectionStatus.DISCONNECTED
     }
-}
 
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    override fun sendPower(power: Float, value: ByteArray) {
+        val gatt = bluetoothGatt
+        if (gatt == null) {
+            Log.e("Bluetooth", "Not connected to a GATT server")
+            return
+        }
+
+        // Replace with the actual UUIDs of your service and characteristic
+        val serviceUuid = UUID.fromString("YOUR_SERVICE_UUID")
+        val characteristicUuid = UUID.fromString("YOUR_CHARACTERISTIC_UUID")
+
+        val service = gatt.getService(serviceUuid)
+        if (service == null) {
+            Log.e("Bluetooth", "Service with UUID $serviceUuid not found")
+            return
+        }
+
+        val characteristic = service.getCharacteristic(characteristicUuid)
+        if (characteristic == null) {
+            Log.e("Bluetooth", "Characteristic with UUID $characteristicUuid not found")
+            return
+        }
+
+        // Ensure the characteristic supports write
+        if ((characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE) == 0) {
+            Log.e("Bluetooth", "Characteristic ${characteristic.uuid} does not support write")
+            return
+        }
+        characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+
+
+
+
+        try {
+            gatt.writeCharacteristic(
+                characteristic,
+                value,
+                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            )
+                Log.d(
+                    "Bluetooth",
+                    "sendPower: Successfully initiated write of value ${
+                        value.joinToString(" ") { "%02x".format(it) }
+                    }"
+                )
+        } catch (e: Exception) {
+            Log.e("Bluetooth", "sendPower: Exception during write", e)
+        }
+    }
+}
 
 //class BluetoothConnectionInterfaceImpl(
 //    private val context: Context,

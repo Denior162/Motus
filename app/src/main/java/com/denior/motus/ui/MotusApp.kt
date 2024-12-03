@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -37,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.denior.motus.R
+import com.denior.motus.bluetooth.ConnectionStatus
 
 
 @Composable
@@ -49,7 +49,6 @@ fun DeviceListScreen(viewModel: MotusViewModel = hiltViewModel()) {
     val deviceList by viewModel.deviceList.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
-    val heartRate by viewModel.heartRate.collectAsState()
 
     Scaffold(
         topBar = { MotusTopBar() },
@@ -66,17 +65,14 @@ fun DeviceListScreen(viewModel: MotusViewModel = hiltViewModel()) {
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.bodyLarge
             )
-            heartRate?.let {
-                Text(
-                    text = "Heart Rate: $it bpm",
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            } ?: run {
-                Text(
-                    text = "Heart Rate: Not available",
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
+            viewModel.receivedPower?.collectAsState()?.value?.let {
+                MotorControl(
+                    connectionStatus = connectionStatus == ConnectionStatus.CONNECTED,
+                    receivedPower = it,
+                    selectedPower = viewModel.selectedPower.collectAsState().value,
+                    sendNewPowerToMotor = { newPower ->
+                        viewModel.updateSelectedPower(newPower)
+                    }
                 )
             }
             ListOfDevices(deviceList = deviceList) { device ->

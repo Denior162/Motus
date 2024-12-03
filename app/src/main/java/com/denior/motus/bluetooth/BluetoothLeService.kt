@@ -38,9 +38,14 @@ class BluetoothLeService : Service() {
             }
         }
 
-        override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
+            status: Int
+        ) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d(TAG, "Characteristic read: ${characteristic.value}")
+                Log.d(TAG, "Characteristic read: ${characteristic.uuid}")
             }
         }
     }

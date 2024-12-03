@@ -31,7 +31,10 @@ object BluetoothModule {
         @ApplicationContext context: Context,
         bluetoothAdapter: BluetoothAdapter
     ): BluetoothConnectionInterface {
-        return BluetoothConnectionInterfaceImpl(context, bluetoothAdapter, MutableStateFlow(ConnectionStatus.DISCONNECTED))
+        return BluetoothConnectionInterfaceImpl(
+            context, bluetoothAdapter, MutableStateFlow(ConnectionStatus.DISCONNECTED),
+            receivedPower = null
+        )
     }
 }
 
