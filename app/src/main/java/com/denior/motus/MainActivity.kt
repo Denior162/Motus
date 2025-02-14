@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.denior.motus.ui.MotusApp
+import com.denior.motus.ui.screen.MotusApp
 import com.denior.motus.ui.theme.MotusTheme
 import dagger.hilt.android.AndroidEntryPoint
 

@@ -8,6 +8,9 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.denior.motus.bluetooth.interfaces.DeviceScannerInterface
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,46 +25,77 @@ class DeviceScanner @Inject constructor(
     private val bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
     private val _deviceList = MutableStateFlow<Set<BluetoothDevice>>(emptySet())
     override val deviceList: StateFlow<Set<BluetoothDevice>> get() = _deviceList
+    private val SCAN_PERIOD: Long = 10000
+
+    private var scanning = false
+    private val handler = Handler(Looper.getMainLooper())
+    private val _isScanning = MutableStateFlow(false)
+    override val isScanning: StateFlow<Boolean> = _isScanning
 
     private val leScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            Log.d("DeviceScanner", """
+            |Device found:
+            |Address: ${result.device.address}
+            |Name: ${result.device.name}
+            |RSSI: ${result.rssi}
+            |TX Power: ${result.txPower}
+        """.trimMargin())
+
             _deviceList.value = _deviceList.value.toMutableSet().apply { add(result.device) }
         }
     }
 
     override fun startScanning() {
+        if (scanning) return
+
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.BLUETOOTH_SCAN
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            Log.e("DeviceScanner", "Missing BLUETOOTH_SCAN permission")
             return
         }
-        bluetoothLeScanner?.startScan(leScanCallback)
+
+        try {
+            Log.d("DeviceScanner", "Starting BLE scan...")
+            handler.postDelayed({
+                stopScanning()
+            }, SCAN_PERIOD)
+
+            bluetoothLeScanner?.startScan(leScanCallback) ?: run {
+                Log.e("DeviceScanner", "BluetoothLeScanner is null")
+                return
+            }
+            scanning = true
+            _isScanning.value = true
+
+        } catch (e: Exception) {
+            Log.e("DeviceScanner", "Error starting scan: ${e.message}", e)
+        }
     }
 
     override fun stopScanning() {
+        if (!scanning) return
+
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.BLUETOOTH_SCAN
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            Log.e("DeviceScanner", "Missing BLUETOOTH_SCAN permission")
             return
         }
-        bluetoothLeScanner?.stopScan(leScanCallback)
+
+        try {
+            Log.d("DeviceScanner", "Stopping BLE scan...")
+            bluetoothLeScanner?.stopScan(leScanCallback)
+            scanning = false
+            _isScanning.value = false
+
+        } catch (e: Exception) {
+            Log.e("DeviceScanner", "Error stopping scan: ${e.message}", e)
+        }
     }
 }

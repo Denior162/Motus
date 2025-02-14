@@ -59,6 +59,7 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.bluetooth)
+    implementation(libs.androidx.ui.text.google.fonts)
     kapt(libs.hilt.android.compiler)
 
     implementation (libs.androidx.hilt.navigation.compose)

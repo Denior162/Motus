@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Motus</string>
+    <string name="speed_label">Швидкість: %d об/хв</string>
+    <string name="angle_label">Кут: %d°</string>
+    <string name="connected">Під\'єднано</string>
+    <string name="disconnected">Від\'єднано</string>
+    <string name="motor_status">Стан двигуна</string>
+    <string name="retry">Повторити спробу</string>
+    <string name="needs_permissions">Потрібні дозволи</string>
+    <string name="change_device">Змінити пристрій</string>
+    <string name="scanning">Сканування…</string>
+    <string name="select_device">Обрати пристрій</string>
+    <string name="available_devices">Доступні пристрої</string>
+    <string name="no_devices_found">Пристроїв не знайдено</string>
+    <string name="permissions_required">Потрібні дозволи</string>
+    <string name="unknown_device">Невідомий пристрій</string>
+    <string name="connect">Під\'єднати</string>
+    <string name="min_speed">Мін: 1 об/хв</string>
+    <string name="max_speed">Макс: 60 об/хв</string>
+    <string name="min_angle">Мін: -360°</string>
+    <string name="max_angle">Макс: 360°</string>
+    <string name="connecting">Підключення…</string>
+    <string name="connected_state">Під\'єднано</string>
+    <string name="disconnected_state">Від\'єднано</string>
+    <string name="connection_failed">Помилка підключення</string>
+</resources>

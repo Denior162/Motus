@@ -6,4 +6,21 @@
     <string name="disconnected">Disconnected</string>
     <string name="motor_status">Motor Status</string>
     <string name="retry">Retry</string>
+    <string name="min_speed">Min: 1 RPM</string>
+    <string name="max_speed">Max: 60 RPM</string>
+    <string name="min_angle">Min: -360°</string>
+    <string name="max_angle">Max: 360°</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connected_state">Connected</string>
+    <string name="disconnected_state">Disconnected</string>
+    <string name="needs_permissions">Permissions required</string>
+    <string name="change_device">Change device</string>
+    <string name="scanning">Scanning…</string>
+    <string name="select_device">Select device</string>
+    <string name="available_devices">Available devices</string>
+    <string name="no_devices_found">No devices found</string>
+    <string name="permissions_required">Permissions required</string>
+    <string name="unknown_device">Unknown device</string>
+    <string name="connect">Connect</string>
+    <string name="connection_failed">Connection failed</string>
 </resources>

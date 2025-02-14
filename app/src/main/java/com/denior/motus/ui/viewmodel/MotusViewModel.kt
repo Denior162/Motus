@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.regex.Pattern
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,6 +27,9 @@ class MotusViewModel @Inject constructor(
     private val deviceScanner: DeviceScanner,
     private val bluetoothConnectionManager: BluetoothConnectionManager
 ) : ViewModel() {
+
+    private val targetDeviceAddress = "F0:F5:BD:C9:66:1E"
+
 
     val deviceList: StateFlow<List<BluetoothDevice>> = deviceScanner.deviceList
         .map { it.toList() }
@@ -43,33 +46,43 @@ class MotusViewModel @Inject constructor(
     private val _motorState = MutableStateFlow(MotorState())
     val motorState: StateFlow<MotorState> = _motorState
 
-    fun updateRpm(newRpm: Float) {
-        _motorState.update { currentState ->
-            val clampedRpm = newRpm.coerceIn(1f, 60f)
+    fun setMotorSpeed(rpm: Float) {
+        viewModelScope.launch {
+            val clampedRpm = rpm.coerceIn(1f, 60f)
             val newCommand = MotorCommand(
-                targetAngle = currentState.angle.toInt(),
+                targetAngle = _motorState.value.angle.toInt(),
                 rpm = clampedRpm.toInt()
             )
-            sendMotorCommand(newCommand)
-            currentState.copy(rpm = clampedRpm)
+            try {
+                sendMotorCommand(newCommand)
+                _motorState.update { it.copy(rpm = clampedRpm) }
+            } catch (e: Exception) {
+                Log.e("MotusViewModel", "Failed to set motor speed: ${e.message}")
+            }
         }
     }
 
-    fun updateAngle(newAngle: Float) {
-        _motorState.update { currentState ->
-            val clampedAngle = newAngle.coerceIn(-360f, 360f)
-            val newCommand = MotorCommand(
-                targetAngle = clampedAngle.toInt(),
-                rpm = currentState.rpm.toInt()
-            )
-            sendMotorCommand(newCommand)
-            currentState.copy(angle = clampedAngle)
+    fun setMotorAngle(degrees: Float) {
+        viewModelScope.launch {
+            _motorState.update { currentState ->
+                val clampedAngle = degrees.coerceIn(-360f, 360f)
+                val newCommand = MotorCommand(
+                    targetAngle = clampedAngle.toInt(),
+                    rpm = currentState.rpm.toInt()
+                )
+                try {
+                    sendMotorCommand(newCommand)
+                } catch (e: Exception) {
+                    Log.e("MotusViewModel", "Failed to set motor angle: ${e.message}")
+                }
+                currentState.copy(angle = clampedAngle)
+            }
         }
     }
 
     data class MotorState(
         val rpm: Float = 0f,
-        val angle: Float = 90f
+        val angle: Float = 0f
     )
 
     private fun sendMotorCommand(command: MotorCommand) {
@@ -78,7 +91,7 @@ class MotusViewModel @Inject constructor(
                 Log.w("MotusViewModel", "Cannot send command: device not connected")
                 return@launch
             }
-            
+
             try {
                 bluetoothConnectionManager.sendMotorCommand(command)
             } catch (e: Exception) {
@@ -88,14 +101,42 @@ class MotusViewModel @Inject constructor(
     }
 
     fun startScanning() {
-        _searchState.value = SearchState.Scanning
-        deviceScanner.startScanning()
-
         viewModelScope.launch {
-            delay(5000)
-            _searchState.value = SearchState.Success
-            delay(1000)
-            _searchState.value = SearchState.Idle
+            try {
+                Log.d("MotusViewModel", "Starting scan, looking for device: $targetDeviceAddress")
+                _searchState.value = SearchState.Scanning
+                deviceScanner.startScanning()
+
+                try {
+                    withTimeout(10000) {
+                        while (!deviceList.value.any { it.address == targetDeviceAddress }) {
+                            Log.d("MotusViewModel", "Current device list: ${
+                                deviceList.value.joinToString {
+                                    it.address
+                                }
+                            }")
+                            delay(100)
+                        }
+                        Log.d("MotusViewModel", "Target device found!")
+                        deviceList.value.find { it.address == targetDeviceAddress }?.let {
+                            connectToDevice(targetDeviceAddress)
+                        }
+                    }
+                    _searchState.value = SearchState.Success
+                } catch (e: Exception) {
+                    Log.e("MotusViewModel", "Scanning failed: ${e.message}, devices found: ${
+                        deviceList.value.size
+                    }")
+                    _searchState.value = SearchState.Error
+                }
+            } catch (e: Exception) {
+                Log.e("MotusViewModel", "Unexpected error during scanning: ${e.message}", e)
+                _searchState.value = SearchState.Error
+            } finally {
+                Log.d("MotusViewModel", "Stopping scan...")
+                deviceScanner.stopScanning()
+                _searchState.value = SearchState.Idle
+            }
         }
     }
 
@@ -105,11 +146,7 @@ class MotusViewModel @Inject constructor(
     }
 
     fun connectToDevice(deviceAddress: String) {
-        if (!isValidBluetoothAddress(deviceAddress)) {
-            Log.e("MotusViewModel", "Invalid Bluetooth address: $deviceAddress")
-            return
-        }
-        
+
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastConnectAttempt < debounceInterval) {
             Log.d("MotusViewModel", "Connect attempt ignored due to debounce.")
@@ -118,7 +155,8 @@ class MotusViewModel @Inject constructor(
         lastConnectAttempt = currentTime
 
         if (bluetoothConnectionManager.connectedDeviceAddress == deviceAddress &&
-            connectionState.value == ConnectionState.Connected()) {
+            connectionState.value == ConnectionState.Connected()
+        ) {
             Log.d("MotusViewModel", "Already connected to this device: $deviceAddress")
             return
         }
@@ -140,8 +178,7 @@ class MotusViewModel @Inject constructor(
         }
     }
 
-    private fun isValidBluetoothAddress(address: String): Boolean {
-        val macPattern = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
-        return Pattern.matches(macPattern, address)
+    fun clearDevices() {
+        _searchState.value = SearchState.Idle
     }
 }
