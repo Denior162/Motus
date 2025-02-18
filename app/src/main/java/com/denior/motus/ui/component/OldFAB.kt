@@ -59,7 +59,8 @@ fun OldDeviceFAB(viewModel: MotusViewModel, permission: Boolean, isConnected: Bo
 
     val requiredPermissions = listOf(
         Manifest.permission.BLUETOOTH_SCAN,
-        Manifest.permission.BLUETOOTH_CONNECT
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.ACCESS_FINE_LOCATION
     )
     val context = androidx.compose.ui.platform.LocalContext.current
     val hasAllPermissions = requiredPermissions.all { perm ->

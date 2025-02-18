@@ -13,8 +13,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -28,8 +30,12 @@ class MotusViewModel @Inject constructor(
 
     private val targetDeviceAddress = "F0:F5:BD:C9:66:1E"
 
-    private val _deviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
-    val deviceList: StateFlow<List<BluetoothDevice>> = _deviceList.asStateFlow()
+    val deviceList: StateFlow<List<BluetoothDevice>> = deviceScanner.deviceList
+        .map { it.toList() }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+//    private val _deviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+//    val deviceList: StateFlow<List<BluetoothDevice>> = _deviceList.asStateFlow()
 
     val connectionState: StateFlow<ConnectionState> = bluetoothConnectionManager.connectionState
 
@@ -106,7 +112,7 @@ class MotusViewModel @Inject constructor(
                         }
                         Log.d("MotusViewModel", "Target device found!")
                         deviceList.value.find { it.address == targetDeviceAddress }?.let {
-                            connectToDevice(it)
+                            connectToDevice(it.address)
                         }
                     }
                     _searchState.value = SearchState.Success
@@ -132,7 +138,7 @@ class MotusViewModel @Inject constructor(
         _searchState.value = SearchState.Idle
     }
 
-    private fun connectToDevice(deviceAddress: String = targetDeviceAddress) {
+    fun connectToDevice(deviceAddress: String = targetDeviceAddress) {
 
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastConnectAttempt < debounceInterval) {
