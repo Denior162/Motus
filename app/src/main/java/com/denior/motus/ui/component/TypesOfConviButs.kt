@@ -3,12 +3,10 @@ package com.denior.motus.ui.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.IconButtonColors
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,12 +19,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ConvenientRowOfFABLikeSquareButtons(
+fun ValueSelectorButtonRow(
     isEnabled: Boolean,
     onValueChanged: (Float) -> Unit,
     values: List<Float>,
     isRecommended: Float? = null,
-    contentDescriptionForParameter: (Float) -> String) {
+    contentDescriptionForParameter: (Float) -> String
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
@@ -36,17 +35,15 @@ fun ConvenientRowOfFABLikeSquareButtons(
             val isLast = index == values.size - 1
 
             val shape = when {
-                isFirst -> CutCornerShape(
-                    topStart = 12.dp, topEnd = 4.dp,
-                    bottomStart = 12.dp, bottomEnd = 4.dp
+                isFirst -> RoundedCornerShape(
+                    topStart = 12.dp, topEnd = 8.dp, bottomStart = 12.dp, bottomEnd = 8.dp
                 )
 
-                isLast -> CutCornerShape(
-                    topStart = 4.dp, topEnd = 12.dp,
-                    bottomStart = 4.dp, bottomEnd = 12.dp
+                isLast -> RoundedCornerShape(
+                    topStart = 8.dp, topEnd = 12.dp, bottomStart = 8.dp, bottomEnd = 12.dp
                 )
 
-                else -> RoundedCornerShape(4.dp)
+                else -> RoundedCornerShape(8.dp)
             }
 
             val type = when {
@@ -59,62 +56,58 @@ fun ConvenientRowOfFABLikeSquareButtons(
                 onClick = onValueChanged,
                 value = value,
                 shape = shape,
-                type = type, modifier = Modifier.weight(1f),
+                type = type,
+                modifier = Modifier.weight(1f),
                 isEnabled = isEnabled,
                 contentDescription = contentDescriptionForParameter(value)
-                
+
             )
         }
     }
 }
 
 enum class TypesOfConviButs {
-    PRIMARY,
-    RECOMMENDED,
-    STANDARD
+    PRIMARY, RECOMMENDED, STANDARD
 }
 
 @Composable
-fun ConvenientFABLikeSquareButton(isEnabled: Boolean,
+fun ConvenientFABLikeSquareButton(
+    isEnabled: Boolean,
     onClick: (Float) -> Unit,
     value: Float,
     type: TypesOfConviButs,
     shape: Shape,
-    modifier: Modifier = Modifier, contentDescription: String
+    modifier: Modifier = Modifier,
+    contentDescription: String
 ) {
-    val buttonModifier = Modifier
-        .height(60.dp)
-        .semantics { this.contentDescription = contentDescription }
-        .then(modifier)
+    val buttonModifier =
+        Modifier
+            .semantics { this.contentDescription = contentDescription }
+            .then(modifier)
     when (type) {
         TypesOfConviButs.PRIMARY -> FilledIconButton(enabled = isEnabled,
             shape = shape,
             modifier = buttonModifier,
-            onClick = { onClick(value) }
-        ) {
-            Text("$value")
+            onClick = { onClick(value) }) {
+            Text("${value.toInt()}")
         }
 
         TypesOfConviButs.STANDARD -> FilledTonalIconButton(enabled = isEnabled,
             shape = shape,
             modifier = buttonModifier,
-            onClick = { onClick(value) }
-        ) {
-            Text("$value")
+            onClick = { onClick(value) }) {
+            Text("${value.toInt()}")
         }
 
-        TypesOfConviButs.RECOMMENDED -> FilledTonalIconButton(enabled = isEnabled,
-            colors = IconButtonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface
-            ),
+        TypesOfConviButs.RECOMMENDED -> FilledIconButton(enabled = isEnabled,
             shape = shape,
             modifier = buttonModifier,
-            onClick = { onClick(value) }
-        ) {
-            Text("$value")
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ),
+            onClick = { onClick(value) }) {
+            Text("${value.toInt()}")
         }
     }
 }
@@ -122,20 +115,20 @@ fun ConvenientFABLikeSquareButton(isEnabled: Boolean,
 @Composable
 @Preview
 fun RowOfConvenientButtonsPrev() {
-    ConvenientRowOfFABLikeSquareButtons(
-        isEnabled = true, onValueChanged = { },
-        values = listOf(30f, 45f, 60f, 90f),
+    ValueSelectorButtonRow(isEnabled = true,
+        onValueChanged = { },
+        values = listOf(15f, 19f, 30f, 45f, 60f, 90f),
+        isRecommended = 19f,
         contentDescriptionForParameter = { float ->
             when (float) {
                 0f -> "Set minimum speed"
                 60f -> "Set maximum speed"
                 else -> "Set speed to ${float.toInt()} RPM"
             }
-        }
-    )
+        })
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 fun ConvenientFABLikeSquareButtonPreview() {
     MaterialTheme {

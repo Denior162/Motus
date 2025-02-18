@@ -41,7 +41,7 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
-    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
+    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.NotConnected)
     override val connectionState: StateFlow<ConnectionState> get() = _connectionState
 
     private val _characteristicsFlow = MutableStateFlow<List<DeviceCharacteristics>>(emptyList())
@@ -115,7 +115,11 @@ class BluetoothConnectionManager @Inject constructor(
             val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
             if (device.bondState != BluetoothDevice.BOND_BONDED) {
                 Log.d(TAG, "Device not bonded, attempting to create bond")
-                device.createBond()
+                if (hasBluetoothPermissions()) {
+                    device.createBond()
+                } else {
+                    handleMissingPermissions("createBond")
+                }
             }
 
             _connectedDeviceAddress = deviceAddress
@@ -163,7 +167,7 @@ class BluetoothConnectionManager @Inject constructor(
             bluetoothGatt?.close()
             bluetoothGatt = null
             _connectedDeviceAddress = null
-            _connectionState.value = ConnectionState.Disconnected
+            _connectionState.value = ConnectionState.NotConnected
             _characteristicsFlow.value = emptyList()
         } catch (e: SecurityException) {
             handleMissingPermissions("disconnect")
@@ -203,7 +207,7 @@ class BluetoothConnectionManager @Inject constructor(
 
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.d(TAG, "Disconnected from GATT server")
-                    _connectionState.value = ConnectionState.Disconnected
+                    _connectionState.value = ConnectionState.NotConnected
                     _characteristicsFlow.value = emptyList()
                     bluetoothGatt?.close()
                 }
@@ -281,14 +285,20 @@ class BluetoothConnectionManager @Inject constructor(
             BluetoothGatt.GATT_SUCCESS -> {
                 Log.d(TAG, "Write successful for ${characteristic.uuid}")
             }
-
             BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION -> {
                 Log.e(TAG, "Authentication required, attempting to bond")
                 _connectedDeviceAddress?.let { address ->
-                    bluetoothAdapter.getRemoteDevice(address).createBond()
+                    try {
+                        if (hasBluetoothPermissions()) {
+                            bluetoothAdapter.getRemoteDevice(address).createBond()
+                        } else {
+                            handleMissingPermissions("createBond")
+                        }
+                    } catch (e: SecurityException) {
+                        handleMissingPermissions("createBond")
+                    }
                 }
             }
-
             else -> {
                 Log.e(TAG, "Characteristic write failed with status: $status")
             }

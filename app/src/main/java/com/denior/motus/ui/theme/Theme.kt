@@ -246,7 +246,7 @@ enum class ContrastLevel {
 @Composable
 fun MotusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    dynamicColor: Boolean = true,
     contrastLevel: ContrastLevel = ContrastLevel.NORMAL,
     content: @Composable () -> Unit
 ) {

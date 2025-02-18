@@ -37,7 +37,7 @@ object BluetoothModule {
         return BluetoothConnectionInterfaceImpl(
             context, 
             bluetoothAdapter, 
-            MutableStateFlow(ConnectionState.Disconnected)
+            MutableStateFlow(ConnectionState.NotConnected)
         )
     }
 

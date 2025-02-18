@@ -13,10 +13,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -30,10 +28,8 @@ class MotusViewModel @Inject constructor(
 
     private val targetDeviceAddress = "F0:F5:BD:C9:66:1E"
 
-
-    val deviceList: StateFlow<List<BluetoothDevice>> = deviceScanner.deviceList
-        .map { it.toList() }
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private val _deviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    val deviceList: StateFlow<List<BluetoothDevice>> = _deviceList.asStateFlow()
 
     val connectionState: StateFlow<ConnectionState> = bluetoothConnectionManager.connectionState
 
@@ -48,17 +44,8 @@ class MotusViewModel @Inject constructor(
 
     fun setMotorSpeed(rpm: Float) {
         viewModelScope.launch {
-            val clampedRpm = rpm.coerceIn(1f, 60f)
-            val newCommand = MotorCommand(
-                targetAngle = _motorState.value.angle.toInt(),
-                rpm = clampedRpm.toInt()
-            )
-            try {
-                sendMotorCommand(newCommand)
-                _motorState.update { it.copy(rpm = clampedRpm) }
-            } catch (e: Exception) {
-                Log.e("MotusViewModel", "Failed to set motor speed: ${e.message}")
-            }
+            val clampedRpm = rpm.coerceIn(0f, 60f)
+            _motorState.update { it.copy(rpm = clampedRpm) }
         }
     }
 
@@ -101,7 +88,7 @@ class MotusViewModel @Inject constructor(
     }
 
     fun startScanning() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 Log.d("MotusViewModel", "Starting scan, looking for device: $targetDeviceAddress")
                 _searchState.value = SearchState.Scanning
@@ -119,7 +106,7 @@ class MotusViewModel @Inject constructor(
                         }
                         Log.d("MotusViewModel", "Target device found!")
                         deviceList.value.find { it.address == targetDeviceAddress }?.let {
-                            connectToDevice(targetDeviceAddress)
+                            connectToDevice(it)
                         }
                     }
                     _searchState.value = SearchState.Success
@@ -145,7 +132,7 @@ class MotusViewModel @Inject constructor(
         _searchState.value = SearchState.Idle
     }
 
-    fun connectToDevice(deviceAddress: String) {
+    private fun connectToDevice(deviceAddress: String = targetDeviceAddress) {
 
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastConnectAttempt < debounceInterval) {

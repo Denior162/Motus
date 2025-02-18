@@ -1,6 +1,7 @@
 package com.denior.motus.ui.component
 
 import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.size
@@ -13,7 +14,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,34 +57,34 @@ fun OldDeviceFAB(viewModel: MotusViewModel, permission: Boolean, isConnected: Bo
         else -> stringResource(R.string.select_device)
     }
 
-    val permissions = remember {
-        arrayOf(
-            Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.BLUETOOTH_CONNECT
-        )
+    val requiredPermissions = listOf(
+        Manifest.permission.BLUETOOTH_SCAN,
+        Manifest.permission.BLUETOOTH_CONNECT
+    )
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val hasAllPermissions = requiredPermissions.all { perm ->
+        androidx.core.content.ContextCompat.checkSelfPermission(context,
+            perm) == PackageManager.PERMISSION_GRANTED
     }
 
-    var shouldRequestPermissions by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
+
         ActivityResultContracts.RequestMultiplePermissions()
+
     ) { perms ->
-        shouldRequestPermissions = false
         if (perms.all { it.value }) {
             viewModel.startScanning()
             showDeviceList = true
         }
     }
 
-    LaunchedEffect(shouldRequestPermissions) {
-        if (shouldRequestPermissions) {
-            permissionLauncher.launch(permissions)
-        }
-    }
-
     ExtendedFloatingActionButton(
         onClick = {
             when {
+                !hasAllPermissions -> {
+                    permissionLauncher.launch(requiredPermissions.toTypedArray())
+                }
                 connectionState is ConnectionState.Failed -> {
                     viewModel.disconnect()
                     viewModel.clearDevices()
@@ -96,9 +96,6 @@ fun OldDeviceFAB(viewModel: MotusViewModel, permission: Boolean, isConnected: Bo
                     viewModel.clearDevices()
                     viewModel.stopScanning()
                     showDeviceList = true
-                }
-                !permission -> {
-                    shouldRequestPermissions = true
                 }
                 searchState != SearchState.Scanning -> {
                     viewModel.startScanning()

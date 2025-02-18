@@ -7,6 +7,7 @@ import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
@@ -19,13 +20,13 @@ import javax.inject.Inject
 
 class DeviceScanner @Inject constructor(
     private val context: Context,
-    bluetoothAdapter: BluetoothAdapter?
+    private val bluetoothAdapter: BluetoothAdapter?
 ) : DeviceScannerInterface {
 
     private val bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
     private val _deviceList = MutableStateFlow<Set<BluetoothDevice>>(emptySet())
     override val deviceList: StateFlow<Set<BluetoothDevice>> get() = _deviceList
-    private val SCAN_PERIOD: Long = 10000
+    private val scanPeriod: Long = 10000
 
     private var scanning = false
     private val handler = Handler(Looper.getMainLooper())
@@ -34,13 +35,26 @@ class DeviceScanner @Inject constructor(
 
     private val leScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            Log.d("DeviceScanner", """
-            |Device found:
-            |Address: ${result.device.address}
-            |Name: ${result.device.name}
-            |RSSI: ${result.rssi}
-            |TX Power: ${result.txPower}
-        """.trimMargin())
+            // Check permission at runtime.
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.BLUETOOTH_SCAN
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+
+            try {
+                Log.d("DeviceScanner", """
+                |Device found:
+                |Address: ${result.device.address}
+                |Name: ${result.device.name}
+                |RSSI: ${result.rssi}
+                |TX Power: ${result.txPower}
+            """.trimMargin())
+            } catch (se: SecurityException) {
+                Log.e("DeviceScanner", "SecurityException: ${se.message}")
+            }
 
             _deviceList.value = _deviceList.value.toMutableSet().apply { add(result.device) }
         }
@@ -58,16 +72,30 @@ class DeviceScanner @Inject constructor(
             return
         }
 
+        if (bluetoothAdapter?.isEnabled == false) {
+            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(enableBtIntent)
+            return
+        }
+
         try {
             Log.d("DeviceScanner", "Starting BLE scan...")
             handler.postDelayed({
                 stopScanning()
-            }, SCAN_PERIOD)
+            }, scanPeriod)
 
-            bluetoothLeScanner?.startScan(leScanCallback) ?: run {
-                Log.e("DeviceScanner", "BluetoothLeScanner is null")
+            try {
+                bluetoothLeScanner?.startScan(leScanCallback) ?: run {
+                    Log.e("DeviceScanner", "BluetoothLeScanner is null")
+                    return
+                }
+            } catch (se: SecurityException) {
+                Log.e("DeviceScanner", "SecurityException: ${se.message}. BLUETOOTH_PRIVILEGED.")
                 return
             }
+            
             scanning = true
             _isScanning.value = true
 
