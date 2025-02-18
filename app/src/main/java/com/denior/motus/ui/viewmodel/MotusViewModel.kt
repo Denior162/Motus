@@ -7,8 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.denior.motus.bluetooth.manager.BluetoothConnectionManager
 import com.denior.motus.bluetooth.manager.DeviceScanner
 import com.denior.motus.bluetooth.state.ConnectionState
+import com.denior.motus.bluetooth.state.SearchState
 import com.denior.motus.data.model.MotorCommand
-import com.denior.motus.ui.state.SearchState
+import com.denior.motus.domain.BluetoothUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -25,7 +26,9 @@ import javax.inject.Inject
 @HiltViewModel
 class MotusViewModel @Inject constructor(
     private val deviceScanner: DeviceScanner,
-    private val bluetoothConnectionManager: BluetoothConnectionManager
+    private val bluetoothConnectionManager: BluetoothConnectionManager,
+    private val bluetoothUseCase: BluetoothUseCase
+
 ) : ViewModel() {
 
     private val targetDeviceAddress = "F0:F5:BD:C9:66:1E"
@@ -33,9 +36,6 @@ class MotusViewModel @Inject constructor(
     val deviceList: StateFlow<List<BluetoothDevice>> = deviceScanner.deviceList
         .map { it.toList() }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-//    private val _deviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
-//    val deviceList: StateFlow<List<BluetoothDevice>> = _deviceList.asStateFlow()
 
     val connectionState: StateFlow<ConnectionState> = bluetoothConnectionManager.connectionState
 
@@ -96,6 +96,7 @@ class MotusViewModel @Inject constructor(
     fun startScanning() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                val startTime = System.currentTimeMillis()
                 Log.d("MotusViewModel", "Starting scan, looking for device: $targetDeviceAddress")
                 _searchState.value = SearchState.Scanning
                 deviceScanner.startScanning()
@@ -110,16 +111,21 @@ class MotusViewModel @Inject constructor(
                             }")
                             delay(100)
                         }
-                        Log.d("MotusViewModel", "Target device found!")
+                        val endTime = System.currentTimeMillis()
+                        val scanDuration = endTime - startTime
+                        Log.d("MotusViewModel", "Target device found! Scan took $scanDuration ms")
+
                         deviceList.value.find { it.address == targetDeviceAddress }?.let {
                             connectToDevice(it.address)
                         }
                     }
                     _searchState.value = SearchState.Success
                 } catch (e: Exception) {
-                    Log.e("MotusViewModel", "Scanning failed: ${e.message}, devices found: ${
-                        deviceList.value.size
-                    }")
+                    Log.e(
+                        "MotusViewModel", "Scanning failed: ${e.message}, devices found: ${
+                            deviceList.value.size
+                        }"
+                    )
                     _searchState.value = SearchState.Error
                 }
             } catch (e: Exception) {
@@ -134,11 +140,10 @@ class MotusViewModel @Inject constructor(
     }
 
     fun stopScanning() {
-        deviceScanner.stopScanning()
-        _searchState.value = SearchState.Idle
+        bluetoothUseCase.stopScanning()
     }
 
-    fun connectToDevice(deviceAddress: String = targetDeviceAddress) {
+    private fun connectToDevice(deviceAddress: String = targetDeviceAddress) {
 
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastConnectAttempt < debounceInterval) {
@@ -165,10 +170,7 @@ class MotusViewModel @Inject constructor(
     }
 
     fun disconnect() {
-        viewModelScope.launch(Dispatchers.IO) {
-            Log.d("MotusViewModel", "Disconnecting from device")
-            bluetoothConnectionManager.disconnect()
-        }
+        bluetoothUseCase.disconnect()
     }
 
     fun clearDevices() {

@@ -64,7 +64,8 @@ dependencies {
 
     implementation (libs.androidx.hilt.navigation.compose)
 
-
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

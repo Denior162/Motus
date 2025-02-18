@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,8 +45,6 @@ fun MotusApp(
     },
         floatingActionButton = {
             OldDeviceFAB(
-                    permission = true,
-                    isConnected = isConnected,
                     viewModel = viewModel
                 )
         }
@@ -219,108 +216,6 @@ fun MotorControlSlider(
         }
     }
 }
-
-@Composable
-fun MotorSpeedSlider(
-    value: Float,
-    isEnabled: Boolean,
-    onValueChange: (Float) -> Unit,
-    rpmValueRange: ClosedFloatingPointRange<Float> = 1f..60f
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = stringResource(R.string.speed_label, value.toInt()),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics {
-                contentDescription = "Speed control slider"
-            }
-        )
-
-        Slider(
-            value = value,
-            onValueChange = { onValueChange(it) },
-            valueRange = rpmValueRange,
-            steps = 15,
-            enabled = isEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics {
-                    stateDescription = "Current speed: ${value.toInt()} RPM"
-                    contentDescription = "Motor speed control slider"
-                },
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-        ) {
-            Text(
-                modifier = Modifier.weight(1f), text =
-                stringResource(R.string.min_speed),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                modifier = Modifier.weight(1f), text =
-                stringResource(R.string.max_speed),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-
-@Composable
-fun MotorAngleSlider(
-    value: Float,
-    isEnabled: Boolean,
-    onValueChange: (Float) -> Unit,
-    angleValueRange: ClosedFloatingPointRange<Float> = -360f..360f
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = stringResource(R.string.angle_label, value.toInt()),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics {
-                contentDescription = "Angle control slider"
-            }
-        )
-
-
-        Slider(value = value,
-            onValueChange = { onValueChange(it) },
-            valueRange = angleValueRange,
-            steps = 72,
-            enabled = isEnabled,
-            modifier = Modifier.semantics {
-                stateDescription = "Current angle: ${value.toInt()} degrees"
-                contentDescription = "Motor angle control slider"
-            }
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                modifier = Modifier.weight(1f), text =
-                stringResource(R.string.min_angle),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                modifier = Modifier.weight(1f), text =
-                (stringResource(R.string.max_angle)),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun ControlScreenPreview() {
@@ -351,18 +246,6 @@ fun MotorControlPreview() {
 @Composable
 fun ConnectionStatusCardPreview() {
     ConnectionStatusCard(connectionState = ConnectionState.Connected())
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MotorSpeedSliderPreview() {
-    MotorSpeedSlider(value = 30f, isEnabled = true, onValueChange = {})
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MotorAngleSliderPreview() {
-    MotorAngleSlider(value = 0f, isEnabled = true, onValueChange = {})
 }
 
 @Preview(

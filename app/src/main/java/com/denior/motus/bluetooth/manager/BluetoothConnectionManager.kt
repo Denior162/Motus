@@ -24,6 +24,12 @@ import kotlinx.coroutines.withTimeout
 import java.util.UUID
 import javax.inject.Inject
 
+/**
+ * Manages Bluetooth GATT connections and interactions.
+ *
+ * @property context The application [Context] used for permissions and establishing GATT connections.
+ * @property bluetoothAdapter The [BluetoothAdapter] used to connect to remote devices.
+ */
 class BluetoothConnectionManager @Inject constructor(
     private val context: Context,
     private val bluetoothAdapter: BluetoothAdapter,
@@ -41,7 +47,7 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
-    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.NotConnected)
+    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Idle)
     override val connectionState: StateFlow<ConnectionState> get() = _connectionState
 
     private val _characteristicsFlow = MutableStateFlow<List<DeviceCharacteristics>>(emptyList())
@@ -104,6 +110,13 @@ class BluetoothConnectionManager @Inject constructor(
         _connectionState.value = ConnectionState.Failed("Missing Bluetooth permissions")
     }
 
+    /**
+     * Initiates a connection to a remote Bluetooth device with the specified [deviceAddress].
+     *
+     * If the device is not bonded, an attempt to bond is made. This method updates [_connectionState].
+     *
+     * @param deviceAddress The MAC address of the remote device to connect to.
+     */
     override fun connect(deviceAddress: String) {
         if (!validateBluetoothState(deviceAddress)) return
         if (!hasBluetoothPermissions()) {
@@ -146,6 +159,29 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
+    /**
+     * Disconnects from the currently connected Bluetooth device, if any,
+     * and cleans up the GATT resources. Resets connection and characteristics state.
+     */
+    override fun disconnect() {
+        try {
+            bluetoothGatt?.disconnect()
+            bluetoothGatt?.close()
+            bluetoothGatt = null
+            _connectedDeviceAddress = null
+            _connectionState.value = ConnectionState.Idle
+            _characteristicsFlow.value = emptyList()
+        } catch (e: SecurityException) {
+            handleMissingPermissions("disconnect")
+        }
+    }
+
+    /**
+     * Validates that Bluetooth is enabled before attempting a connection.
+     *
+     * @param deviceAddress The MAC address of the remote device to validate.
+     * @return true if Bluetooth is enabled; false otherwise.
+     */
     private fun validateBluetoothState(deviceAddress: String): Boolean {
         Log.d(TAG, "Attempting to connect to device: $deviceAddress")
         try {
@@ -161,19 +197,14 @@ class BluetoothConnectionManager @Inject constructor(
         return true
     }
 
-    override fun disconnect() {
-        try {
-            bluetoothGatt?.disconnect()
-            bluetoothGatt?.close()
-            bluetoothGatt = null
-            _connectedDeviceAddress = null
-            _connectionState.value = ConnectionState.NotConnected
-            _characteristicsFlow.value = emptyList()
-        } catch (e: SecurityException) {
-            handleMissingPermissions("disconnect")
-        }
-    }
-
+    /**
+     * Retrieves a [BluetoothGattCharacteristic] by its [serviceUUID] and [characteristicUUID].
+     * Returns null if permissions are missing or if the characteristic is not found.
+     *
+     * @param serviceUUID The UUID of the service containing the characteristic.
+     * @param characteristicUUID The UUID of the characteristic to retrieve.
+     * @return The requested [BluetoothGattCharacteristic], or null if unavailable.
+     */
     private fun getCharacteristic(
         serviceUUID: UUID,
         characteristicUUID: UUID
@@ -191,6 +222,14 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
+    /**
+     * Handles changes to the GATT connection state. If successfully connected,
+     * initiates service discovery.
+     *
+     * @param gatt The [BluetoothGatt] instance for the connection.
+     * @param status The connection status code.
+     * @param newState The new connection state (e.g., connected or disconnected).
+     */
     private fun handleConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
         try {
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -207,7 +246,7 @@ class BluetoothConnectionManager @Inject constructor(
 
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.d(TAG, "Disconnected from GATT server")
-                    _connectionState.value = ConnectionState.NotConnected
+                    _connectionState.value = ConnectionState.Idle
                     _characteristicsFlow.value = emptyList()
                     bluetoothGatt?.close()
                 }
@@ -224,6 +263,14 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
+    /**
+     * Handles changes to the GATT connection state. If successfully connected,
+     * initiates service discovery.
+     *
+     * @param gatt The [BluetoothGatt] instance for the connection.
+     * @param status The connection status code.
+     * @param newState The new connection state (e.g., connected or disconnected).
+     */
     private fun handleServicesDiscovered(gatt: BluetoothGatt, status: Int, value: ByteArray) {
         try {
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -251,6 +298,12 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
+    /**
+     * Triggered when a characteristic's value changes (e.g., via notification).
+     *
+     * @param characteristic The [BluetoothGattCharacteristic] that changed.
+     * @param value The new byte array representing the updated data.
+     */
     private fun handleCharacteristicChanged(
         characteristic: BluetoothGattCharacteristic,
         value: ByteArray
@@ -277,6 +330,13 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
+    /**
+     * Handles the result of a characteristic write operation. If unsuccessful due to
+     * insufficient authentication, attempts to bond with the device.
+     *
+     * @param characteristic The [BluetoothGattCharacteristic] written to.
+     * @param status The status of the write operation.
+     */
     private fun handleCharacteristicWrite(
         characteristic: BluetoothGattCharacteristic,
         status: Int
@@ -285,6 +345,7 @@ class BluetoothConnectionManager @Inject constructor(
             BluetoothGatt.GATT_SUCCESS -> {
                 Log.d(TAG, "Write successful for ${characteristic.uuid}")
             }
+
             BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION -> {
                 Log.e(TAG, "Authentication required, attempting to bond")
                 _connectedDeviceAddress?.let { address ->
@@ -299,12 +360,19 @@ class BluetoothConnectionManager @Inject constructor(
                     }
                 }
             }
+
             else -> {
                 Log.e(TAG, "Characteristic write failed with status: $status")
             }
         }
     }
 
+    /**
+     * Sends a [MotorCommand] to the remote device by writing to the motor characteristic.
+     * Ensures that the RPM and angle are within a safe range before converting to a byte array.
+     *
+     * @param command The [MotorCommand] to be sent, containing the target angle and RPM.
+     */
     fun sendMotorCommand(command: MotorCommand) {
         if (!hasBluetoothPermissions()) {
             handleMissingPermissions("sendMotorCommand")

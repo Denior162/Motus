@@ -35,7 +35,6 @@ class DeviceScanner @Inject constructor(
 
     private val leScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            // Check permission at runtime.
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.BLUETOOTH_SCAN
@@ -45,19 +44,31 @@ class DeviceScanner @Inject constructor(
             }
 
             try {
-                Log.d("DeviceScanner", """
+                Log.d(
+                    "DeviceScanner", """
                 |Device found:
                 |Address: ${result.device.address}
                 |Name: ${result.device.name}
                 |RSSI: ${result.rssi}
                 |TX Power: ${result.txPower}
-            """.trimMargin())
+            """.trimMargin()
+                )
             } catch (se: SecurityException) {
                 Log.e("DeviceScanner", "SecurityException: ${se.message}")
             }
 
             _deviceList.value = _deviceList.value.toMutableSet().apply { add(result.device) }
         }
+    }
+
+    private fun ensureBluetoothEnabled(): Boolean {
+        if (bluetoothAdapter?.isEnabled == false) {
+            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                .apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+            context.startActivity(enableBtIntent)
+            return false
+        }
+        return true
     }
 
     override fun startScanning() {
@@ -72,11 +83,7 @@ class DeviceScanner @Inject constructor(
             return
         }
 
-        if (bluetoothAdapter?.isEnabled == false) {
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(enableBtIntent)
+        if (!ensureBluetoothEnabled()) {
             return
         }
 
@@ -95,7 +102,7 @@ class DeviceScanner @Inject constructor(
                 Log.e("DeviceScanner", "SecurityException: ${se.message}. BLUETOOTH_PRIVILEGED.")
                 return
             }
-            
+
             scanning = true
             _isScanning.value = true
 

@@ -1,8 +1,8 @@
-package com.denior.motus.ui.state
+package com.denior.motus.bluetooth.state
 
 sealed class SearchState {
     data object Idle : SearchState()
     data object Scanning : SearchState()
     data object Success : SearchState()
-data object Error : SearchState()
+    data object Error : SearchState()
 }

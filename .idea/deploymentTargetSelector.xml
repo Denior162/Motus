@@ -13,10 +13,13 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="TopAppBar">
+      <SelectionState runConfigName="WigglingEyesIndicatorPrev">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="MotusAppPrewiev">
+      <SelectionState runConfigName="ControlScreenTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="controlScreen_shouldDisplayConnectionStatus_whenConnected()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

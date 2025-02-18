@@ -41,7 +41,7 @@ class BluetoothConnectionInterfaceImpl(
 
                     BluetoothProfile.STATE_DISCONNECTED -> {
                         Log.d("Bluetooth", "Disconnected from device: ${gatt.device.address}")
-                        (connectionState as MutableStateFlow).value = ConnectionState.NotConnected
+                        (connectionState as MutableStateFlow).value = ConnectionState.Idle
                     }
 
                     else -> {
@@ -50,7 +50,7 @@ class BluetoothConnectionInterfaceImpl(
                 }
             } catch (e: SecurityException) {
                 Log.e("Bluetooth", "Security exception during connection state change", e)
-                (connectionState as MutableStateFlow).value = ConnectionState.NotConnected
+                (connectionState as MutableStateFlow).value = ConnectionState.Idle
             }
         }
 
@@ -169,7 +169,7 @@ class BluetoothConnectionInterfaceImpl(
             bluetoothGatt?.disconnect()
             bluetoothGatt?.close()
             bluetoothGatt = null
-            (connectionState as MutableStateFlow).value = ConnectionState.NotConnected
+            (connectionState as MutableStateFlow).value = ConnectionState.Idle
         } catch (e: SecurityException) {
             Log.e("Bluetooth", "Security exception during disconnect", e)
         }
