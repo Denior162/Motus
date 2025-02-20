@@ -2,6 +2,7 @@ package com.denior.motus.ui.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledIconButton
@@ -18,16 +19,18 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
+
 @Composable
 fun ValueSelectorButtonRow(
     isEnabled: Boolean,
     onValueChanged: (Float) -> Unit,
     values: List<Float>,
     isRecommended: Float? = null,
-    contentDescriptionForParameter: (Float) -> String
+    contentDescriptionForParameter: (Float) -> String,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
     ) {
         values.forEachIndexed { index, value ->
@@ -36,11 +39,11 @@ fun ValueSelectorButtonRow(
 
             val shape = when {
                 isFirst -> RoundedCornerShape(
-                    topStart = 12.dp, topEnd = 8.dp, bottomStart = 12.dp, bottomEnd = 8.dp
+                    topStart = 16.dp, topEnd = 8.dp, bottomStart = 16.dp, bottomEnd = 8.dp
                 )
 
                 isLast -> RoundedCornerShape(
-                    topStart = 8.dp, topEnd = 12.dp, bottomStart = 8.dp, bottomEnd = 12.dp
+                    topStart = 8.dp, topEnd = 16.dp, bottomStart = 8.dp, bottomEnd = 16.dp
                 )
 
                 else -> RoundedCornerShape(8.dp)
@@ -57,7 +60,7 @@ fun ValueSelectorButtonRow(
                 value = value,
                 shape = shape,
                 type = type,
-                modifier = Modifier.weight(1f),
+                modifier = modifier.weight(1f).aspectRatio(1f),
                 isEnabled = isEnabled,
                 contentDescription = contentDescriptionForParameter(value)
 
@@ -113,7 +116,7 @@ fun ConvenientFABLikeSquareButton(
 }
 
 @Composable
-@Preview
+@Preview (showBackground = true)
 fun RowOfConvenientButtonsPrev() {
     ValueSelectorButtonRow(isEnabled = true,
         onValueChanged = { },
@@ -135,7 +138,7 @@ fun ConvenientFABLikeSquareButtonPreview() {
         ConvenientFABLikeSquareButton(
             onClick = {},
             value = 45f,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             isEnabled = true,
             type = TypesOfConviButs.RECOMMENDED,
             modifier = Modifier,

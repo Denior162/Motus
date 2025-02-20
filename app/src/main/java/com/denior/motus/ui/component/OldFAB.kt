@@ -31,7 +31,6 @@ import com.denior.motus.ui.viewmodel.MotusViewModel
 
 @Composable
 fun OldDeviceFAB(viewModel: MotusViewModel) {
-    val deviceList by viewModel.deviceList.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
     var showDeviceList by remember { mutableStateOf(false) }
     val connectionState by viewModel.connectionState.collectAsState()
@@ -100,8 +99,6 @@ fun OldDeviceFAB(viewModel: MotusViewModel) {
                 connectionState is ConnectionState.Failed -> {
                     viewModel.disconnect()
                     viewModel.clearDevices()
-                    viewModel.startScanning()
-                    showDeviceList = true
                 }
 
                 connectionState is ConnectionState.Connected -> {

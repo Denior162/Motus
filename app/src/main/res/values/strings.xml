@@ -6,7 +6,7 @@
     <string name="disconnected">Disconnected</string>
     <string name="motor_status">Motor Status</string>
     <string name="retry">Retry</string>
-    <string name="min_speed">Min: 1 RPM</string>
+    <string name="min_speed">Min: 0 RPM</string>
     <string name="max_speed">Max: 60 RPM</string>
     <string name="min_angle">Min: -360°</string>
     <string name="max_angle">Max: 360°</string>

@@ -14,10 +14,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -33,9 +31,8 @@ class MotusViewModel @Inject constructor(
 
     private val targetDeviceAddress = "F0:F5:BD:C9:66:1E"
 
-    val deviceList: StateFlow<List<BluetoothDevice>> = deviceScanner.deviceList
-        .map { it.toList() }
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private val _deviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    private val deviceList: StateFlow<List<BluetoothDevice>> = _deviceList.asStateFlow()
 
     val connectionState: StateFlow<ConnectionState> = bluetoothConnectionManager.connectionState
 
@@ -95,6 +92,12 @@ class MotusViewModel @Inject constructor(
 
     fun startScanning() {
         viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch {
+                deviceScanner.deviceList.collect { newDevices ->
+                    _deviceList.value = newDevices.toList()
+                }
+            }
+
             try {
                 val startTime = System.currentTimeMillis()
                 Log.d("MotusViewModel", "Starting scan, looking for device: $targetDeviceAddress")

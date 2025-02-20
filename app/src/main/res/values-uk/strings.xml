@@ -16,7 +16,7 @@
     <string name="permissions_required">Потрібні дозволи</string>
     <string name="unknown_device">Невідомий пристрій</string>
     <string name="connect">Під\'єднати</string>
-    <string name="min_speed">Мін: 1 об/хв</string>
+    <string name="min_speed">Мін: 0 об/хв</string>
     <string name="max_speed">Макс: 60 об/хв</string>
     <string name="min_angle">Мін: -360°</string>
     <string name="max_angle">Макс: 360°</string>

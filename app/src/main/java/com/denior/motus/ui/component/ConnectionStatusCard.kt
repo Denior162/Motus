@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
@@ -24,19 +25,18 @@ import com.denior.motus.R
 import com.denior.motus.bluetooth.state.ConnectionState
 
 @Composable
-fun ConnectionStatusCard(connectionState: ConnectionState) {
-    Card(
-        modifier = Modifier
+fun ConnectionStatusCard(connectionState: ConnectionState, modifier: Modifier = Modifier) {
+    Card(shape = RoundedCornerShape(24.dp),
+        modifier = modifier
             .fillMaxWidth()
             .semantics {
                 contentDescription = "Motor status: $connectionState"
             }, colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(24.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -50,8 +50,11 @@ fun ConnectionStatusCard(connectionState: ConnectionState) {
                     Icon(
                         imageVector = if (connectionState is ConnectionState.Connected) Icons.Default.CheckCircle else Icons.Default.Warning,
                         contentDescription = null,
-
-                        )
+                        tint = if (connectionState is ConnectionState.Connected)
+                            MaterialTheme.colorScheme.primary
+                        else 
+                            MaterialTheme.colorScheme.error
+                    )
                     Text(
                         text = when (connectionState) {
                             is ConnectionState.Connected -> stringResource(R.string.connected_state)
