@@ -11,6 +11,7 @@ class MotorCommandTest {
 
     @Test
     fun `test MotorCommand toByteArray and parse back`() {
+
         val commandsToTest = listOf(
             MotorCommand(targetAngle = 0, rpm = 0),
             MotorCommand(targetAngle = 360, rpm = 60),

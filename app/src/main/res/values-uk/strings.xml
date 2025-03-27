@@ -5,7 +5,7 @@
     <string name="angle_label">Кут: %d°</string>
     <string name="connected">Під\'єднано</string>
     <string name="disconnected">Від\'єднано</string>
-    <string name="motor_status">Стан мотора</string>
+    <string name="connection_status">Стан підключення</string>
     <string name="retry">Повторити спробу</string>
     <string name="needs_permissions">Потрібні дозволи</string>
     <string name="change_device">Змінити пристрій</string>

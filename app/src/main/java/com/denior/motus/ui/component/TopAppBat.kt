@@ -16,7 +16,8 @@ fun MotusTopBar(
     modifier: Modifier = Modifier,
     title: String? = null
 ) {
-    CenterAlignedTopAppBar(scrollBehavior = scrollBehavior,
+    CenterAlignedTopAppBar(
+        scrollBehavior = scrollBehavior,
         title = { Text(title ?: stringResource(R.string.app_name)) }, modifier = modifier
     )
 }

@@ -1,5 +1,6 @@
 [versions]
-agp = "8.8.1"
+adaptive = "1.0.0"
+agp = "8.9.0"
 hiltAndroid = "2.53"
 hiltNavigationCompose = "1.2.0"
 kotlin = "2.0.21"
@@ -13,14 +14,18 @@ composeBom = "2025.02.00"
 appcompat = "1.7.0"
 lifecycleViewmodelCompose = "2.8.7"
 bluetooth = "1.0.0-alpha02"
+materialIconsExtended = "1.7.8"
 mockitoAndroid = "5.8.0"
 mockitoCore = "5.8.0"
+mockk = "1.13.9"
 uiTextGoogleFonts = "1.7.8"
 
 [libraries]
+androidx-adaptive = { module = "androidx.compose.material3.adaptive:adaptive", version.ref = "adaptive" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -41,6 +46,7 @@ androidx-bluetooth = { group = "androidx.bluetooth", name = "bluetooth", version
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockitoAndroid" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

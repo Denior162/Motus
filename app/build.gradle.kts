@@ -53,9 +53,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-
+implementation (libs.androidx.material.icons.extended)
     implementation (libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.adaptive)
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.bluetooth)
@@ -67,10 +68,14 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.android)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.mockk)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

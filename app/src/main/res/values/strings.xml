@@ -4,7 +4,7 @@
     <string name="angle_label">Angle: %d°</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
-    <string name="motor_status">Motor Status</string>
+    <string name="connection_status">Connection Status</string>
     <string name="retry">Retry</string>
     <string name="min_speed">Min: 0 RPM</string>
     <string name="max_speed">Max: 60 RPM</string>

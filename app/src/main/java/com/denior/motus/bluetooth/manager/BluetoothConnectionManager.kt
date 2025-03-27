@@ -47,7 +47,7 @@ class BluetoothConnectionManager @Inject constructor(
         }
     }
 
-    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Idle)
+    val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Idle)
     override val connectionState: StateFlow<ConnectionState> get() = _connectionState
 
     private val _characteristicsFlow = MutableStateFlow<List<DeviceCharacteristics>>(emptyList())
@@ -136,7 +136,7 @@ class BluetoothConnectionManager @Inject constructor(
             }
 
             _connectedDeviceAddress = deviceAddress
-            _connectionState.value = ConnectionState.Connecting
+            _connectionState.value = ConnectionState.ConnectingToDevice
 
             connectionJob = CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -269,7 +269,6 @@ class BluetoothConnectionManager @Inject constructor(
      *
      * @param gatt The [BluetoothGatt] instance for the connection.
      * @param status The connection status code.
-     * @param newState The new connection state (e.g., connected or disconnected).
      */
     private fun handleServicesDiscovered(gatt: BluetoothGatt, status: Int, value: ByteArray) {
         try {

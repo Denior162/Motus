@@ -22,7 +22,7 @@ import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @HiltViewModel
-class MotusViewModel @Inject constructor(
+open class MotusViewModel @Inject constructor(
     private val deviceScanner: DeviceScanner,
     private val bluetoothConnectionManager: BluetoothConnectionManager,
     private val bluetoothUseCase: BluetoothUseCase
@@ -46,14 +46,14 @@ class MotusViewModel @Inject constructor(
     val motorState: StateFlow<MotorState> = _motorState
 
     fun setMotorSpeed(rpm: Float) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val clampedRpm = rpm.coerceIn(0f, 60f)
             _motorState.update { it.copy(rpm = clampedRpm) }
         }
     }
 
     fun setMotorAngle(degrees: Float) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _motorState.update { currentState ->
                 val clampedAngle = degrees.coerceIn(-360f, 360f)
                 val newCommand = MotorCommand(

@@ -6,3 +6,4 @@ sealed class SearchState {
     data object Success : SearchState()
     data object Error : SearchState()
 }
+
